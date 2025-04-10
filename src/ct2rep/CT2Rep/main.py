@@ -1,14 +1,17 @@
-import torch
 import argparse
-import numpy as np
-from modules.tokenizers import Tokenizer
-from modules.dataloaders import R2DataLoader
-from modules.metrics import compute_scores
-from modules.optimizers import build_optimizer, build_lr_scheduler
-from modules.trainer import Trainer
-from modules.loss import compute_loss
-from models.ct2rep import CT2RepModel
-from modules.data_ct import CTReportDataset
+from pathlib import Path
+
+from ct2rep.CT2Rep.models.ct2rep import CT2RepModel
+from ct2rep.CT2Rep.modules.data_ct import CTReportDataset
+from ct2rep.CT2Rep.modules.dataloaders import R2DataLoader
+from ct2rep.CT2Rep.modules.loss import compute_loss
+from ct2rep.CT2Rep.modules.metrics import compute_scores
+from ct2rep.CT2Rep.modules.optimizers import build_lr_scheduler, build_optimizer
+from ct2rep.CT2Rep.modules.tokenizers import Tokenizer
+from ct2rep.CT2Rep.modules.trainer import Trainer
+
+MODULE_PATH = Path(__file__).resolve(strict=True).parents[3]
+
 
 def parse_agrs():
     parser = argparse.ArgumentParser()
@@ -19,7 +22,6 @@ def parse_agrs():
     parser.add_argument('--num_workers', type=int, default=2, help='the number of workers for dataloader.')
     parser.add_argument('--batch_size', type=int, default=2, help='the number of samples for a batch')
     parser.add_argument('--dataset_name', type=str, default='ct_dataset', help='dataset name.')
-
 
     # Model settings (for Transformer)
     parser.add_argument('--d_model', type=int, default=512, help='the dimension of Transformer.')
@@ -73,12 +75,11 @@ def parse_agrs():
     parser.add_argument('--gamma', type=float, default=0.1, help='the gamma of the learning rate scheduler.')
 
     # Others
-    parser.add_argument('--xlsxfile', type=str, default="../example_data/CT2Rep/data_reports_example.xlsx", help='reports xlsx file.')
-    parser.add_argument('--trainfolder', type=str, default="../example_data/CT2Rep/train", help='train folder.')
-    parser.add_argument('--validfolder', type=str, default="../example_data/CT2Rep/valid", help='valid folder.')
+    parser.add_argument('--xlsxfile', type=str, default=f"{MODULE_PATH}/data/example_data/CT2Rep/data_reports_example.xlsx", help='reports xlsx file.')
+    parser.add_argument('--trainfolder', type=str, default=f"{MODULE_PATH}/data/example_data/CT2Rep/train", help='train folder.')
+    parser.add_argument('--validfolder', type=str, default=f"{MODULE_PATH}/data/example_data/CT2Rep/valid", help='valid folder.')
 
     parser.add_argument('--resume', type=str, help='whether to resume the training from existing checkpoints.')
-
 
     args = parser.parse_args()
     return args
@@ -91,11 +92,11 @@ def main():
     # create tokenizer
     tokenizer = Tokenizer(args)
 
-    train_ds = CTReportDataset(args,data_folder=args.trainfolder, xlsx_file=args.xlsxfile, tokenizer=tokenizer, num_frames=2)
-    valid_ds  = CTReportDataset(args,data_folder=args.validfolder, xlsx_file=args.xlsxfile, tokenizer=tokenizer, num_frames=2)
+    train_ds = CTReportDataset(args, data_folder=args.trainfolder, xlsx_file=args.xlsxfile, tokenizer=tokenizer, num_frames=2)
+    valid_ds = CTReportDataset(args, data_folder=args.validfolder, xlsx_file=args.xlsxfile, tokenizer=tokenizer, num_frames=2)
 
     # create data loader
-    train_dataloader = R2DataLoader(args,train_ds, tokenizer, split='train', shuffle=True)
+    train_dataloader = R2DataLoader(args, train_ds, tokenizer, split='train', shuffle=True)
     val_dataloader = R2DataLoader(args, valid_ds, tokenizer, split='val', shuffle=False)
 
     # build model architecture

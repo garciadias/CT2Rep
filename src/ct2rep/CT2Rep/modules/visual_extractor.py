@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torchvision.models as models
 
 
 class VisualExtractor(nn.Module):
@@ -11,7 +10,7 @@ class VisualExtractor(nn.Module):
 
     def forward(self, images):
         patch_feats = self.model(images, return_encoded_tokens=True)
-        patch_feats = patch_feats.permute(0,4,1,2,3)
+        patch_feats = patch_feats.permute(0, 4, 1, 2, 3)
         print(patch_feats.shape)
         print("test")
         avg_feats = self.avg_fnt(patch_feats).squeeze().reshape(-1, patch_feats.size(1))

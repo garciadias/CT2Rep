@@ -1,6 +1,5 @@
-import torch
 import numpy as np
-from torchvision import transforms
+import torch
 from torch.utils.data import DataLoader
 
 
@@ -38,4 +37,3 @@ class R2DataLoader(DataLoader):
             targets_masks[i, :len(report_masks)] = report_masks
 
         return images_id, images, torch.LongTensor(targets), torch.FloatTensor(targets_masks)
-

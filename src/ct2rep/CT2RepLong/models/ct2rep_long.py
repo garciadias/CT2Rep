@@ -1,10 +1,9 @@
-import torch
-import torch.nn as nn
 import numpy as np
+import torch.nn as nn
 
-from modules.visual_extractor import VisualExtractor
-from modules.encoder_decoder import EncoderDecoder
-from ctvit import CTViT
+from ct2rep.ctvit.ctvit import CTViT
+from ct2rep.Long.modules.encoder_decoder import EncoderDecoder
+from ct2rep.Long.modules.visual_extractor import VisualExtractor
 
 
 class CT2RepLongModel(nn.Module):
@@ -13,15 +12,15 @@ class CT2RepLongModel(nn.Module):
         self.args = args
         self.tokenizer = tokenizer
         model = CTViT(
-                            dim = 512,
-                            codebook_size = 8192,
-                            image_size = 480,
-                            patch_size = 24,
-                            temporal_patch_size = 12,
-                            spatial_depth = 4,
-                            temporal_depth = 4,
-                            dim_head = 32,
-                            heads = 8
+                            dim=512,
+                            codebook_size=8192,
+                            image_size=480,
+                            patch_size=24,
+                            temporal_patch_size=12,
+                            spatial_depth=4,
+                            temporal_depth=4,
+                            dim_head=32,
+                            heads=8
                         )
         self.visual_extractor = VisualExtractor(model, args)
         self.encoder_decoder = EncoderDecoder(args, tokenizer)
@@ -32,14 +31,13 @@ class CT2RepLongModel(nn.Module):
         params = sum([np.prod(p.size()) for p in model_parameters])
         return super().__str__() + '\nTrainable parameters: {}'.format(params)
 
-    def forward_ct2replong(self, images, context,images2,targets=None,mode='train'):
+    def forward_ct2replong(self, images, context, images2, targets=None, mode='train'):
         att_feats, fc_feats = self.visual_extractor(images)
         att_feats2, fc_feats2 = self.visual_extractor(images2)
         if mode == 'train':
-            output = self.encoder_decoder(fc_feats, att_feats, targets, context,fc_feats2, att_feats2,mode='forward')
+            output = self.encoder_decoder(fc_feats, att_feats, targets, context, fc_feats2, att_feats2, mode='forward')
         elif mode == 'sample':
-            output, _ = self.encoder_decoder(fc_feats, att_feats,targets, context,fc_feats2, att_feats2,mode='sample')
+            output, _ = self.encoder_decoder(fc_feats, att_feats, targets, context, fc_feats2, att_feats2, mode='sample')
         else:
             raise ValueError
         return output
-

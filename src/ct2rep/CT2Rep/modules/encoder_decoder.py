@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import copy
 import math
@@ -10,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .att_model import pack_wrapper, AttModel
+from .att_model import AttModel, pack_wrapper
 
 
 def clones(module, N):

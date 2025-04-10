@@ -1,0 +1,23 @@
+services:
+  ct2rep:
+    tty: true
+    image: ct2rep
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        UNAME: ${USER}
+    volumes:
+      - ../:/ct2rep/
+    command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 src/main.py "]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+      restart_policy:
+        condition: always

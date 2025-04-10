@@ -1,11 +1,11 @@
+import csv
 import os
+import time
 from abc import abstractmethod
 
-import time
-import torch
 import pandas as pd
+import torch
 from numpy import inf
-import csv
 
 
 class BaseTrainer(object):
@@ -13,13 +13,13 @@ class BaseTrainer(object):
         self.args = args
 
         # setup GPU device if available, move model into configured device
-        #self.device, device_ids = self._prepare_device(args.n_gpu)
-        if torch.cuda.is_available(): 
-                 dev = "cuda:0" 
+        # self.device, device_ids = self._prepare_device(args.n_gpu)
+        if torch.cuda.is_available():
+                 dev = "cuda:0"
         self.device = torch.device(dev)
         self.model = model.to(self.device)
-        #if len(device_ids) > 1:
-            #self.model = torch.nn.DataParallel(model, device_ids=device_ids)
+        # if len(device_ids) > 1:
+            # self.model = torch.nn.DataParallel(model, device_ids=device_ids)
 
         self.criterion = criterion
         self.metric_ftns = metric_ftns
@@ -56,7 +56,7 @@ class BaseTrainer(object):
         not_improved_count = 0
         for epoch in range(self.start_epoch, self.epochs + 1):
           result = self._train_epoch(epoch)
-          if(epoch%1==0):
+          if (epoch % 1 == 0):
 
             # save logged informations into log dict
             log = {'epoch': epoch}
@@ -108,7 +108,7 @@ class BaseTrainer(object):
 
         if not os.path.exists(self.args.record_dir):
             os.makedirs(self.args.record_dir)
-        record_path = os.path.join(self.args.record_dir, self.args.dataset_name+'.csv')
+        record_path = os.path.join(self.args.record_dir, self.args.dataset_name + '.csv')
         if not os.path.exists(record_path):
             record_table = pd.DataFrame()
         else:
@@ -191,17 +191,17 @@ class Trainer(BaseTrainer):
         self.test_dataloader = test_dataloader
 
     def _train_epoch(self, epoch):
-      
+
       train_loss = 0
       print("begin train")
       self.model.train()
-      for batch_idx, (images_id, images, images2,reports_ids, reports_masks,context,mask) in enumerate(self.train_dataloader):
-            images, reports_ids, reports_masks,context,mask,images2 = images.to(self.device), reports_ids.to(self.device), reports_masks.to(
-                self.device),context.to(self.device),mask.to(self.device),images2.to(self.device)
-            #output = self.model(images, context,reports_ids,mode='train')
-            #print(images.shape,images2.shape,"shape")
-            output = self.model(images, context,images2,reports_ids,mode='train')
-            loss = self.criterion(output,reports_ids, reports_masks)
+      for batch_idx, (images_id, images, images2, reports_ids, reports_masks, context, mask) in enumerate(self.train_dataloader):
+            images, reports_ids, reports_masks, context, mask, images2 = images.to(self.device), reports_ids.to(self.device), reports_masks.to(
+                self.device), context.to(self.device), mask.to(self.device), images2.to(self.device)
+            # output = self.model(images, context,reports_ids,mode='train')
+            # print(images.shape,images2.shape,"shape")
+            output = self.model(images, context, images2, reports_ids, mode='train')
+            loss = self.criterion(output, reports_ids, reports_masks)
             train_loss += loss.item()
             self.optimizer.zero_grad()
             loss.backward()
@@ -211,26 +211,26 @@ class Trainer(BaseTrainer):
       print("begin eval")
       dir_save = self.args.save_dir
       print(epoch)
-      if(epoch%1==0):
+      if (epoch % 1 == 0):
         self.model.eval()
         with torch.no_grad():
            val_gts, val_res = [], []
-           gts=f"{dir_save}/"+str(epoch)+"gts.csv"
-           res=f"{dir_save}/"+str(epoch)+"res.csv"
-           with open(gts,"w",newline="") as gtss:
-            with open(res,"w",newline="") as ress:
-             for batch_idx, (images_id, images, images2,reports_ids, reports_masks,context,mask) in enumerate(self.val_dataloader):
-                images, reports_ids, reports_masks,context,mask,images2 = images.to(self.device), reports_ids.to(
-                    self.device), reports_masks.to(self.device),context.to(self.device),mask.to(self.device),images2.to(self.device)
-                output = self.model(images,context,images2,reports_ids, mode='sample')
+           gts = f"{dir_save}/" + str(epoch) + "gts.csv"
+           res = f"{dir_save}/" + str(epoch) + "res.csv"
+           with open(gts, "w", newline="") as gtss:
+            with open(res, "w", newline="") as ress:
+             for batch_idx, (images_id, images, images2, reports_ids, reports_masks, context, mask) in enumerate(self.val_dataloader):
+                images, reports_ids, reports_masks, context, mask, images2 = images.to(self.device), reports_ids.to(
+                    self.device), reports_masks.to(self.device), context.to(self.device), mask.to(self.device), images2.to(self.device)
+                output = self.model(images, context, images2, reports_ids, mode='sample')
                 reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
                 ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
-                
+
                 val_res.extend(reports)
                 val_gts.extend(ground_truths)
-                
-                gt_writer=csv.writer(gtss)
-                gen_writer=csv.writer(ress)
+
+                gt_writer = csv.writer(gtss)
+                gen_writer = csv.writer(ress)
                 for x in range(len(reports)):
                   gt_writer.writerow([str(ground_truths[x])])
                   gen_writer.writerow([str(reports[x])])
@@ -239,7 +239,7 @@ class Trainer(BaseTrainer):
              val_met = self.metric_ftns({i: [gt] for i, gt in enumerate(val_gts)},
                                        {i: [re] for i, re in enumerate(val_res)})
              log.update(**{'val_' + k: v for k, v in val_met.items()})
-        #print("begin test")
+        # print("begin test")
         """
         self.model.eval()
         with torch.no_grad():

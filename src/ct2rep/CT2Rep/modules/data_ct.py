@@ -1,25 +1,23 @@
-import os
 import glob
-import json
-import torch
-import pandas as pd
-import numpy as np
-from PIL import Image
-from torch.utils.data import Dataset
-import torchvision.transforms as transforms
+import os
 from functools import partial
-import torch.nn.functional as F
-import nibabel as nib
+
+import numpy as np
+import pandas as pd
+import torch
+import torchvision.transforms as transforms
 import tqdm
+from torch.utils.data import Dataset
+
 
 def cast_num_frames(t, *, frames):
     f = t.shape[1]
-    if f%frames==0:
-        return t[:,:-(frames-1)]
-    if f%frames==1:
+    if f % frames == 0:
+        return t[:, :-(frames - 1)]
+    if f % frames == 1:
         return t
     else:
-        return t[:,:-((f%frames)-1)]
+        return t[:, :-((f % frames) - 1)]
 
 
 class CTReportDataset(Dataset):
@@ -29,15 +27,15 @@ class CTReportDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_seq_length = args.max_seq_length
         self.accession_to_text = self.load_accession_text(xlsx_file)
-        self.paths=[]
+        self.paths = []
         self.samples = self.prepare_samples()
 
         self.transform = transforms.Compose([
-            transforms.Resize((resize_dim,resize_dim)),
+            transforms.Resize((resize_dim, resize_dim)),
             transforms.ToTensor()
         ])
-        self.nii_to_tensor = partial(self.nii_img_to_tensor, transform = self.transform)
-        self.cast_num_frames_fn = partial(cast_num_frames, frames = num_frames) if force_num_frames else identity
+        self.nii_to_tensor = partial(self.nii_img_to_tensor, transform=self.transform)
+        self.cast_num_frames_fn = partial(cast_num_frames, frames=num_frames) if force_num_frames else identity
 
     def load_accession_text(self, xlsx_file):
         df = pd.read_excel(xlsx_file)
@@ -45,7 +43,6 @@ class CTReportDataset(Dataset):
         for index, row in df.iterrows():
             accession_to_text[row['AccessionNo']] = row["Findings_EN"]
         return accession_to_text
-
 
     def prepare_samples(self):
         samples = []
@@ -60,7 +57,7 @@ class CTReportDataset(Dataset):
                 for nii_file in glob.glob(os.path.join(accession_folder, '*.npz')):
                     # Construct the input text with the included metadata
                     if impression_text == "Not given.":
-                        impression_text=""
+                        impression_text = ""
 
                     input_text_concat = str(impression_text)
 
@@ -75,20 +72,20 @@ class CTReportDataset(Dataset):
 
     def nii_img_to_tensor(self, path, transform):
         img_data = np.load(path)["arr_0"]
-    
-        img_data= np.transpose(img_data, (1, 2, 0))
-        img_data = img_data*1000
+
+        img_data = np.transpose(img_data, (1, 2, 0))
+        img_data = img_data * 1000
         hu_min, hu_max = -1000, 200
         img_data = np.clip(img_data, hu_min, hu_max)
 
-        img_data = (((img_data+400 ) / 600)).astype(np.float32)
-        slices=[]
+        img_data = (((img_data + 400) / 600)).astype(np.float32)
+        slices = []
 
         tensor = torch.tensor(img_data)
 
         # Get the dimensions of the input tensor
-        target_shape = (480,480,240)
-        
+        target_shape = (480, 480, 240)
+
         # Extract dimensions
         h, w, d = tensor.shape
 
@@ -116,11 +113,10 @@ class CTReportDataset(Dataset):
         tensor = torch.nn.functional.pad(tensor, (pad_d_before, pad_d_after, pad_w_before, pad_w_after, pad_h_before, pad_h_after), value=-1)
 
         tensor = tensor.permute(2, 0, 1)
-        
+
         tensor = tensor.unsqueeze(0).unsqueeze(0)
         return tensor[0]
 
-    
     def __getitem__(self, index):
         img, text = self.samples[index]
         img_id = img.split("/")[-1]

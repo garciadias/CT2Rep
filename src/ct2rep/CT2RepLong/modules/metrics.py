@@ -1,10 +1,11 @@
-    from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.cider.cider import Cider
 
-#from pycocoevalcap.meteor import Meteor
-#from pycocoevalcap.rouge import Rouge
+# from pycocoevalcap.meteor import Meteor
+# from pycocoevalcap.rouge import Rouge
 
-#We run these 2 seperalty after training (in different OS and env) as there was a bug in the train envrionment.
+# We run these 2 seperalty after training (in different OS and env) as there was a bug in the train envrionment.
+
 
 def compute_scores(gts, res):
     """
@@ -18,8 +19,8 @@ def compute_scores(gts, res):
     # Set up scorers
     scorers = [
         (Bleu(4), ["BLEU_1", "BLEU_2", "BLEU_3", "BLEU_4"]),
-        #(Meteor(), "METEOR"),
-        #(Rouge(), "ROUGE_L"),
+        # (Meteor(), "METEOR"),
+        # (Rouge(), "ROUGE_L"),
         (Cider(), "CIDEr")
     ]
     eval_res = {}

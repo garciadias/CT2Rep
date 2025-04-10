@@ -1,0 +1,23 @@
+services:
+  ct2rep:
+    tty: true
+    image: ct2rep
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        UNAME: ${USER}
+    volumes:
+      - ../:/ct2rep/
+    command: /bin/bash
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+      restart_policy:
+        condition: always

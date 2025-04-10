@@ -1,7 +1,7 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
-  name = 'ctvit',
+  name='ctvit',
   install_requires=[
     'accelerate',
     'beartype',

@@ -1,6 +1,5 @@
-import torch
 import numpy as np
-from torchvision import transforms
+import torch
 from torch.utils.data import DataLoader
 
 
@@ -25,12 +24,12 @@ class R2DataLoader(DataLoader):
 
     @staticmethod
     def collate_fn(data):
-        #print("im")
-        images_id, images, reports_ids, reports_masks, seq_lengths,reports,mask,context_len,image_2 = zip(*data)
-        image_2=torch.stack(image_2, 0)
+        # print("im")
+        images_id, images, reports_ids, reports_masks, seq_lengths, reports, mask, context_len, image_2 = zip(*data)
+        image_2 = torch.stack(image_2, 0)
         images = torch.stack(images, 0)
         max_seq_length = max(seq_lengths)
-        max_len=max(context_len)
+        max_len = max(context_len)
 
         targets = np.zeros((len(reports_ids), max_seq_length), dtype=int)
         targets_masks = np.zeros((len(reports_ids), max_seq_length), dtype=int)
@@ -48,6 +47,4 @@ class R2DataLoader(DataLoader):
 
         for i, masks in enumerate(mask):
             contexts_masks[i, :len(masks)] = masks
-        return images_id, images,image_2, torch.LongTensor(targets), torch.FloatTensor(targets_masks),torch.LongTensor(targets_contexts), torch.FloatTensor(contexts_masks)
-
-
+        return images_id, images, image_2, torch.LongTensor(targets), torch.FloatTensor(targets_masks), torch.LongTensor(targets_contexts), torch.FloatTensor(contexts_masks)

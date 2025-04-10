@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import modules.utils as utils
+import ct2rep.Long.modules.utils as utils
 
 
 class CaptionModel(nn.Module):
@@ -21,7 +19,7 @@ class CaptionModel(nn.Module):
         mode = kwargs.get('mode', 'forward')
         if 'mode' in kwargs:
             del kwargs['mode']
-        #print(getattr(self, '_' + mode))
+        # print(getattr(self, '_' + mode))
         return getattr(self, '_' + mode)(*args, **kwargs)
 
     def beam_search(self, init_state, init_logprobs, *args, **kwargs):
@@ -71,7 +69,7 @@ class CaptionModel(nn.Module):
             candidate_logprobs = beam_logprobs_sum.unsqueeze(-1) + logprobs  # beam_logprobs_sum Nxb logprobs is NxbxV
             ys, ix = torch.sort(candidate_logprobs.reshape(candidate_logprobs.shape[0], -1), -1, True)
             ys, ix = ys[:, :beam_size], ix[:, :beam_size]
-            beam_ix = torch.div(ix, vocab_size, rounding_mode='floor') 
+            beam_ix = torch.div(ix, vocab_size, rounding_mode='floor')
             selected_ix = ix % vocab_size  # Nxb # which world
             state_ix = (beam_ix + torch.arange(batch_size).type_as(beam_ix).unsqueeze(-1) * logprobs.shape[1]).reshape(
                 -1)  # N*b which in Nxb beams
@@ -118,7 +116,7 @@ class CaptionModel(nn.Module):
         bdash = beam_size // group_size  # beam per group
 
         batch_size = init_logprobs.shape[0]
-        #device = init_logprobs.device
+        # device = init_logprobs.device
         if torch.cuda.is_available():
                  dev = "cuda:0"
         device = torch.device(dev)

@@ -1,14 +1,12 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_packed_sequence
 
-import modules.utils as utils
-from modules.caption_model import CaptionModel
+from ct2rep.CT2Rep.modules import utils
+from ct2rep.CT2Rep.modules.caption_model import CaptionModel
 
 
 def sort_pack_padded_sequence(input, lengths):

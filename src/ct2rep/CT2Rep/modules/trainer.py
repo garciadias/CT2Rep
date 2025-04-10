@@ -1,11 +1,9 @@
+import csv
 import os
 from abc import abstractmethod
 
-import time
 import torch
-import pandas as pd
 from numpy import inf
-import csv
 
 
 class BaseTrainer(object):
@@ -177,16 +175,15 @@ class Trainer(BaseTrainer):
         print("begin eval")
         dir_save = self.args.save_dir
         print(epoch)
-        if(epoch%1==0):
+        if (epoch % 1 == 0):
             self.model.eval()
             with torch.no_grad():
                val_gts, val_res = [], []
-               gts=f"{dir_save}/"+str(epoch)+"gts.csv"
-               res=f"{dir_save}/"+str(epoch)+"res.csv"
+               gts = f"{dir_save}/" + str(epoch) + "gts.csv"
+               res = f"{dir_save}/" + str(epoch) + "res.csv"
 
-
-               with open(gts,"w",newline="") as gtss:
-                with open(res,"w",newline="") as ress:
+               with open(gts, "w", newline="") as gtss:
+                with open(res, "w", newline="") as ress:
                    for batch_idx, (images_id, images, reports_ids, reports_masks) in enumerate(self.test_dataloader):
                         images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
                             self.device), reports_masks.to(self.device)
@@ -195,8 +192,8 @@ class Trainer(BaseTrainer):
                         ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
                         val_res.extend(reports)
                         val_gts.extend(ground_truths)
-                        gt_writer=csv.writer(gtss)
-                        gen_writer=csv.writer(ress)
+                        gt_writer = csv.writer(gtss)
+                        gen_writer = csv.writer(ress)
                         for x in range(len(reports)):
                           gt_writer.writerow([str(ground_truths[x])])
                           gen_writer.writerow([str(reports[x])])

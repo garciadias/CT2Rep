@@ -1,10 +1,10 @@
-import torch
-import torch.nn as nn
 import numpy as np
+import torch.nn as nn
 
-from modules.visual_extractor import VisualExtractor
-from modules.encoder_decoder import EncoderDecoder
-from ctvit import CTViT
+from ct2rep.CT2Rep.modules.encoder_decoder import EncoderDecoder
+from ct2rep.CT2Rep.modules.visual_extractor import VisualExtractor
+from ct2rep.ctvit.ctvit import CTViT
+
 
 class CT2RepModel(nn.Module):
     def __init__(self, args, tokenizer):
@@ -13,15 +13,15 @@ class CT2RepModel(nn.Module):
         self.tokenizer = tokenizer
 
         model = CTViT(
-                    dim = 512,
-                    codebook_size = 8192,
-                    image_size = 480,
-                    patch_size = 24,
-                    temporal_patch_size = 12,
-                    spatial_depth = 4,
-                    temporal_depth = 4,
-                    dim_head = 32,
-                    heads = 8
+                    dim=512,
+                    codebook_size=8192,
+                    image_size=480,
+                    patch_size=24,
+                    temporal_patch_size=12,
+                    spatial_depth=4,
+                    temporal_depth=4,
+                    dim_head=32,
+                    heads=8
                 )
 
         self.visual_extractor = VisualExtractor(model, args)
@@ -33,7 +33,6 @@ class CT2RepModel(nn.Module):
         params = sum([np.prod(p.size()) for p in model_parameters])
         return super().__str__() + '\nTrainable parameters: {}'.format(params)
 
-
     def forward_ct2rep(self, images, targets=None, mode='train'):
         att_feats, fc_feats = self.visual_extractor(images)
         if mode == 'train':
@@ -43,4 +42,3 @@ class CT2RepModel(nn.Module):
         else:
             raise ValueError
         return output
-

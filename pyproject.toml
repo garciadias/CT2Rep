@@ -1,0 +1,82 @@
+[project]
+name = "ct2rep"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+authors = [
+    { name = "Ibrahim Ethem Hamamci", email = "ibrahim.hamamci@uzh.ch" },
+    { name = "Sezgin Er" },
+    { name = "Bjoern Menze" },
+]
+requires-python = ">=3.10,<3.12.0"
+dependencies = [
+    'accelerate',
+    'beartype',
+    'einops>=0.6',
+    'ema-pytorch>=0.2.2',
+    'opencv-python',
+    'pillow',
+    'numpy',
+    'sentencepiece',
+    "torch==2.1.0",
+    'torchtyping',
+    "torchvision==0.16.0",
+    "transformers==4.30.1",
+    'tqdm',
+    'vector-quantize-pytorch==1.1.2',
+    'nibabel',
+    'openpyxl',
+    'pycocoevalcap',
+    'pandas',
+    'click',
+    'appdirs',
+    "pandarallel>=1.6.5",
+    "seaborn>=0.13.2",
+    "pytest>=8.3.4",
+    "scikit-learn>=1.6.1",
+    "monai>=1.4.0",
+    "nltk>=3.9.1",
+    "torchaudio==2.1.0",
+]
+
+[project.scripts]
+ct2rep = "CT2Rep:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "ipykernel>=6.29.5",
+    "ipython>=8.32.0",
+    "ipywidgets>=8.1.5",
+    "isort>=6.0.0",
+    "mypy>=1.15.0",
+    "pandas-stubs>=2.2.3.241126",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.9.7",
+    "taskipy>=1.14.1",
+    "tensorboard>=2.19.0",
+]
+
+[tool.coverage.report]
+exclude_lines = ["if __name__ == .__main__.:"]
+omit = ["*.venv/*", "*/tests/*", "*/__init__.py"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+preview = true
+select = ['I', 'F', 'E', 'W', 'PT']
+
+[tool.taskipy.tasks]
+lint = "ruff check . --fix && ruff check . --diff"
+format = "ruff check . --fix && ruff format ."
+pre_test = "task format && task lint"
+test = "coverage run -m pytest"
+post_test = "coverage report; coverage html"
+only_test = "coverage run -m pytest"

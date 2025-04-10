@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import copy
 import math
@@ -10,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .att_model import pack_wrapper, AttModel
+from .att_model import AttModel, pack_wrapper
 
 
 def clones(module, N):
@@ -80,7 +78,6 @@ class Transformer(nn.Module):
                            self.encode_word(context, mask), src_mask, att_masks2, tgt, tgt_mask, mask)
 
     def encode_word(self, tgt, tgt_mask):
-        
 
         return self.encoder_word(self.tgt_embed(tgt), tgt_mask)
 
@@ -101,7 +98,7 @@ class Transformer(nn.Module):
         memorym = self.rm(self.tgt_embed(tgt), memorym)
 
         memory = self.attn(self.mlp(memorym), hidden_states, hidden_states, src_mask)
-        memory_all= self.attn(self.mlp(memorym), hidden, hidden, mask_all)
+        memory_all = self.attn(self.mlp(memorym), hidden, hidden, mask_all)
         memory = self.mlp1(memory)
         memory_all = self.mlp1(memory_all)
         memory1 = memory
@@ -110,6 +107,7 @@ class Transformer(nn.Module):
 
         return self.decoder(self.tgt_embed(tgt), hidden_states, hidden_word, hidden, src_mask, tgt_mask, memory,
                             memory1, att_mask2, memory_all, mask_all)
+
 
 class Encoder(nn.Module):
     def __init__(self, layer, N):
@@ -194,8 +192,6 @@ class LayerNorm(nn.Module):
         mean = x.mean(-1, keepdim=True)
         std = x.std(-1, keepdim=True)
         return self.gamma * (x - mean) / (std + self.eps) + self.beta
-
-
 
 
 class Decoder(nn.Module):
@@ -501,11 +497,9 @@ class EncoderDecoder(AttModel):
         else:
             seq_mask = None
 
-
         return att_feats, seq, context, att_masks, seq_mask, seq_mask1, att_feats2, att_masks2
 
     def _forward(self, fc_feats, att_feats, seq, context, fc_feats2, att_feats2, att_masks=None):
-
 
         att_feats, seq, context, att_masks, seq_mask, seq_mask1, att_feats2, att_masks2 = self._prepare_feature_forward(
             att_feats, att_masks, seq, context, att_feats2)
@@ -524,9 +518,7 @@ class EncoderDecoder(AttModel):
 
             ys = torch.cat([state[0][0], it.unsqueeze(1).cuda()], dim=1)
 
-
         out = self.model.decode(memory, memory1, memory2, mask, seq, ys, subsequent_mask(ys.size(1)),
                                 att_masks2)
-
 
         return out[:, -1], [ys.unsqueeze(0)]

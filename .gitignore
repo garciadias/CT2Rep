@@ -1,0 +1,29 @@
+# Python-generated files
+.pytest_cache/*
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.vscode/
+
+# Ignore data files
+*.csv
+*.gz
+*.mat
+*.nii
+*.xlsx
+*.npz
+*.json
+*.pth
+*.coverage
+records/
+results/
+reports/
+data/mpm_images.txt
+data/video/
+logs/

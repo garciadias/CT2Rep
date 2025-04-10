@@ -1,7 +1,9 @@
 import json
 import re
 from collections import Counter
+
 import pandas as pd
+
 
 class Tokenizer(object):
     def __init__(self, args):
@@ -18,7 +20,6 @@ class Tokenizer(object):
         with open("token2idx.json", 'w') as json_file:
             # Write the dictionary to the file using JSON format
             json.dump(self.token2idx, json_file)
-
 
     def load_accession_text(self, xlsx_file):
         df = pd.read_excel(xlsx_file)
@@ -50,7 +51,7 @@ class Tokenizer(object):
             .replace('. 2. ', '. ').replace('. 3. ', '. ').replace('. 4. ', '. ').replace('. 5. ', '. ') \
             .replace(' 2. ', '. ').replace(' 3. ', '. ').replace(' 4. ', '. ').replace(' 5. ', '. ') \
             .strip().lower().split('. ')
-        sent_cleaner = lambda t: re.sub('[.,?;*!%^&_+():-\[\]{}]', '', t.replace('"', '').replace('/', '').
+        sent_cleaner = lambda t: re.sub(r'[.,?;*!%^&_+():-\[\]{}]', '', t.replace('"', '').replace('/', '').
                                         replace('\\', '').replace("'", '').strip().lower())
         tokens = [sent_cleaner(sent) for sent in report_cleaner(report) if sent_cleaner(sent) != []]
         report = ' . '.join(tokens) + ' .'
@@ -65,7 +66,7 @@ class Tokenizer(object):
             .replace('. 3. ', '. ').replace('. 4. ', '. ').replace('. 5. ', '. ').replace(' 2. ', '. ') \
             .replace(' 3. ', '. ').replace(' 4. ', '. ').replace(' 5. ', '. ') \
             .strip().lower().split('. ')
-        sent_cleaner = lambda t: re.sub('[.,?;*!%^&_+():-\[\]{}]', '', t.replace('"', '').replace('/', '')
+        sent_cleaner = lambda t: re.sub(r'[.,?;*!%^&_+():-\[\]{}]', '', t.replace('"', '').replace('/', '')
                                         .replace('\\', '').replace("'", '').strip().lower())
         tokens = [sent_cleaner(sent) for sent in report_cleaner(report) if sent_cleaner(sent) != []]
         report = ' . '.join(tokens) + ' .'
