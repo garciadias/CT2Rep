@@ -88,10 +88,8 @@ class CaptionModel(nn.Module):
                                 logprobs.reshape(batch_size, -1).gather(1, ix)
             assert (beam_logprobs_sum == ys).all()
             _tmp_beam_logprobs = unaug_logprobs[state_ix].reshape(batch_size, -1, vocab_size)
-            beam_logprobs = unaug_logprobs.reshape(batch_size, -1, vocab_size).gather(1,
-                                                                                      beam_ix.unsqueeze(-1).expand(-1,
-                                                                                                                   -1,
-                                                                                                                   vocab_size))  # NxbxV
+            beam_logprobs = unaug_logprobs.reshape(
+                batch_size, -1, vocab_size).gather(1, beam_ix.unsqueeze(-1).expand(-1, -1, vocab_size))  # NxbxV
             assert (_tmp_beam_logprobs == beam_logprobs).all()
             beam_seq_logprobs = torch.cat([
                 beam_seq_logprobs,
@@ -118,7 +116,7 @@ class CaptionModel(nn.Module):
         batch_size = init_logprobs.shape[0]
         # device = init_logprobs.device
         if torch.cuda.is_available():
-                 dev = "cuda:0"
+            dev = "cuda:0"
         device = torch.device(dev)
         # INITIALIZATIONS
         beam_seq_table = [torch.LongTensor(batch_size, bdash, 0).to(device) for _ in range(group_size)]

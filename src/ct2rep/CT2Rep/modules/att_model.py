@@ -102,7 +102,9 @@ class AttModel(CaptionModel):
 
         p_fc_feats, p_att_feats, pp_att_feats, p_att_masks = self._prepare_feature(fc_feats, att_feats, att_masks)
 
-        assert beam_size <= self.vocab_size + 1, 'lets assume this for now, otherwise this corner case causes a few headaches down the road. can be dealt with in future if needed'
+        beam_error = 'lets assume this for now, otherwise this corner case causes a few headaches down the road. can' \
+        'be dealt with in future if needed'
+        assert beam_size <= self.vocab_size + 1, beam_error
         seq = fc_feats.new_full((batch_size * sample_n, self.max_seq_length), self.pad_idx, dtype=torch.long)
         seqLogprobs = fc_feats.new_zeros(batch_size * sample_n, self.max_seq_length, self.vocab_size + 1)
         # lets process every image independently for now, for simplicity
@@ -226,7 +228,7 @@ class AttModel(CaptionModel):
     def _diverse_sample(self, fc_feats, att_feats, att_masks=None, opt={}):
 
         sample_method = opt.get('sample_method', 'greedy')
-        beam_size = opt.get('beam_size', 1)
+        opt.get('beam_size', 1)
         temperature = opt.get('temperature', 1.0)
         group_size = opt.get('group_size', 1)
         diversity_lambda = opt.get('diversity_lambda', 0.5)
@@ -234,7 +236,7 @@ class AttModel(CaptionModel):
         block_trigrams = opt.get('block_trigrams', 0)
 
         batch_size = fc_feats.size(0)
-        state = self.init_hidden(batch_size)
+        self.init_hidden(batch_size)
 
         p_fc_feats, p_att_feats, pp_att_feats, p_att_masks = self._prepare_feature(fc_feats, att_feats, att_masks)
 
@@ -263,7 +265,7 @@ class AttModel(CaptionModel):
 
                     # Add diversity
                     if divm > 0:
-                        unaug_logprobs = logprobs.clone()
+                        logprobs.clone()
                         for prev_choice in range(divm):
                             prev_decisions = seq_table[prev_choice][:, t]
                             logprobs[:, prev_decisions] = logprobs[:, prev_decisions] - diversity_lambda
@@ -312,6 +314,5 @@ class AttModel(CaptionModel):
                     seq[:, t] = it
                     seqLogprobs[:, t] = sampleLogprobs.view(-1)
 
-        return torch.stack(seq_table, 1).reshape(batch_size * group_size, -1), torch.stack(seqLogprobs_table,
-                                                                                           1).reshape(
-            batch_size * group_size, -1)
+        return torch.stack(seq_table, 1).reshape(batch_size * group_size, -1), torch.stack(
+            seqLogprobs_table, 1).reshape(batch_size * group_size, -1)
