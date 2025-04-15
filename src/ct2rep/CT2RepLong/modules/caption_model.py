@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import ct2rep.Long.modules.utils as utils
+import ct2rep.CT2RepLong.modules.utils as utils
 
 
 class CaptionModel(nn.Module):

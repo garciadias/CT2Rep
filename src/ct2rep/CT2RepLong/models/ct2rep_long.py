@@ -1,9 +1,9 @@
 import numpy as np
 import torch.nn as nn
 
+from ct2rep.CT2RepLong.modules.encoder_decoder import EncoderDecoder
+from ct2rep.CT2RepLong.modules.visual_extractor import VisualExtractor
 from ct2rep.ctvit.ctvit import CTViT
-from ct2rep.Long.modules.encoder_decoder import EncoderDecoder
-from ct2rep.Long.modules.visual_extractor import VisualExtractor
 
 
 class CT2RepLongModel(nn.Module):

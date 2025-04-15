@@ -1,13 +1,13 @@
 import argparse
 
-from ct2rep.Long.models.ct2rep_long import CT2RepLongModel
-from ct2rep.Long.modules.data_ct import CTReportDataset
-from ct2rep.Long.modules.dataloaders import R2DataLoader
-from ct2rep.Long.modules.loss import compute_loss
-from ct2rep.Long.modules.metrics import compute_scores
-from ct2rep.Long.modules.optimizers import build_lr_scheduler, build_optimizer
-from ct2rep.Long.modules.tokenizers import Tokenizer
-from ct2rep.Long.modules.trainer import Trainer
+from ct2rep.CT2RepLong.models.ct2rep_long import CT2RepLongModel
+from ct2rep.CT2RepLong.modules.data_ct import CTReportDataset
+from ct2rep.CT2RepLong.modules.dataloaders import R2DataLoader
+from ct2rep.CT2RepLong.modules.loss import compute_loss
+from ct2rep.CT2RepLong.modules.metrics import compute_scores
+from ct2rep.CT2RepLong.modules.optimizers import build_lr_scheduler, build_optimizer
+from ct2rep.CT2RepLong.modules.tokenizers import Tokenizer
+from ct2rep.CT2RepLong.modules.trainer import Trainer
 
 
 def parse_agrs():
