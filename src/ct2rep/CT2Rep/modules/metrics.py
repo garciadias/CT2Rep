@@ -28,7 +28,7 @@ def compute_scores(gts, res):
             score, scores = scorer.compute_score(gts, res, verbose=0)
         except TypeError:
             score, scores = scorer.compute_score(gts, res)
-        if type(method) == list:
+        if isinstance(score, list):
             for sc, m in zip(score, method):
                 eval_res[m] = sc
         else:
