@@ -68,7 +68,7 @@ class CaptionModel(nn.Module):
             candidate_logprobs = beam_logprobs_sum.unsqueeze(-1) + logprobs  # beam_logprobs_sum Nxb logprobs is NxbxV
             ys, ix = torch.sort(candidate_logprobs.reshape(candidate_logprobs.shape[0], -1), -1, True)
             ys, ix = ys[:, :beam_size], ix[:, :beam_size]
-            beam_ix = ix // vocab_size  # Nxb which beam
+            beam_ix = torch.div(ix, vocab_size, rounding_mode='floor')
             selected_ix = ix % vocab_size  # Nxb # which world
             state_ix = (beam_ix + torch.arange(batch_size).type_as(beam_ix).unsqueeze(-1) * logprobs.shape[1]).reshape(
                 -1)  # N*b which in Nxb beams
@@ -87,10 +87,8 @@ class CaptionModel(nn.Module):
                                 logprobs.reshape(batch_size, -1).gather(1, ix)
             assert (beam_logprobs_sum == ys).all()
             _tmp_beam_logprobs = unaug_logprobs[state_ix].reshape(batch_size, -1, vocab_size)
-            beam_logprobs = unaug_logprobs.reshape(batch_size, -1, vocab_size).gather(1,
-                                                                                      beam_ix.unsqueeze(-1).expand(-1,
-                                                                                                                   -1,
-                                                                                                                   vocab_size))  # NxbxV
+            beam_logprobs = unaug_logprobs.reshape(
+                batch_size, -1, vocab_size).gather(1, beam_ix.unsqueeze(-1).expand(-1, -1, vocab_size))  # NxbxV
             assert (_tmp_beam_logprobs == beam_logprobs).all()
             beam_seq_logprobs = torch.cat([
                 beam_seq_logprobs,
