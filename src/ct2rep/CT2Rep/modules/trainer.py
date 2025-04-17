@@ -97,8 +97,8 @@ class BaseTrainer(object):
             n_gpu_use = 0
         if n_gpu_use > n_gpu:
             print(
-                "Warning: The number of GPU\'s configured to use is {}, but only {} are available " "on this machine.".format(
-                    n_gpu_use, n_gpu))
+                "Warning: The number of GPU\'s configured to use is {}, but only {} are available " "on this machine."
+                .format(n_gpu_use, n_gpu))
             n_gpu_use = n_gpu
         device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
         list_ids = list(range(n_gpu_use))
@@ -178,13 +178,13 @@ class Trainer(BaseTrainer):
         if (epoch % 1 == 0):
             self.model.eval()
             with torch.no_grad():
-               val_gts, val_res = [], []
-               gts = f"{dir_save}/" + str(epoch) + "gts.csv"
-               res = f"{dir_save}/" + str(epoch) + "res.csv"
+                val_gts, val_res = [], []
+                gts = f"{dir_save}/" + str(epoch) + "gts.csv"
+                res = f"{dir_save}/" + str(epoch) + "res.csv"
 
-               with open(gts, "w", newline="") as gtss:
+            with open(gts, "w", newline="") as gtss:
                 with open(res, "w", newline="") as ress:
-                   for batch_idx, (images_id, images, reports_ids, reports_masks) in enumerate(self.test_dataloader):
+                    for batch_idx, (images_id, images, reports_ids, reports_masks) in enumerate(self.test_dataloader):
                         images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
                             self.device), reports_masks.to(self.device)
                         output = self.model(images, mode='sample')
@@ -195,8 +195,8 @@ class Trainer(BaseTrainer):
                         gt_writer = csv.writer(gtss)
                         gen_writer = csv.writer(ress)
                         for x in range(len(reports)):
-                          gt_writer.writerow([str(ground_truths[x])])
-                          gen_writer.writerow([str(reports[x])])
+                            gt_writer.writerow([str(ground_truths[x])])
+                            gen_writer.writerow([str(reports[x])])
                 gtss.close()
                 ress.close()
                 val_met = self.metric_ftns({i: [gt] for i, gt in enumerate(val_gts)},
