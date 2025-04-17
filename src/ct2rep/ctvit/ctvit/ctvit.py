@@ -37,10 +37,10 @@ def leaky_relu(p=0.1):
 def remove_vgg(fn):
     @wraps(fn)
     def inner(self, *args, **kwargs):
-        has_vgg = hasattr(self, 'vgg')
+        has_vgg = hasattr(self, "vgg")
         if has_vgg:
             vgg = self.vgg
-            delattr(self, 'vgg')
+            delattr(self, "vgg")
 
         out = fn(self, *args, **kwargs)
 
@@ -48,6 +48,7 @@ def remove_vgg(fn):
             self.vgg = vgg
 
         return out
+
     return inner
 
 
@@ -57,23 +58,22 @@ def pair(val):
     return ret
 
 
-def cast_tuple(val, l=1):
-    return val if isinstance(val, tuple) else (val,) * l
+def cast_tuple(val, q=1):
+    return val if isinstance(val, tuple) else (val,) * q
 
 
 def gradient_penalty(images, output, weight=10):
-    batch_size = images.shape[0]
-    device = torch.device('cuda')
+    device = torch.device("cuda")
     gradients = torch_grad(
         outputs=output,
         inputs=images,
         grad_outputs=torch.ones(output.size(), device=device),
         create_graph=True,
         retain_graph=True,
-        only_inputs=True
+        only_inputs=True,
     )[0]
 
-    gradients = rearrange(gradients, 'b ... -> b (...)')
+    gradients = rearrange(gradients, "b ... -> b (...)")
     return weight * ((gradients.norm(2, dim=1) - 1) ** 2).mean()
 
 
@@ -81,12 +81,9 @@ def l2norm(t):
     return F.normalize(t, dim=-1)
 
 
-def leaky_relu(p=0.1):
-    return nn.LeakyReLU(p)
-
-
 def safe_div(numer, denom, eps=1e-8):
     return numer / (denom + eps)
+
 
 # gan losses
 
@@ -108,23 +105,14 @@ def bce_gen_loss(fake):
 
 
 def grad_layer_wrt_loss(loss, layer):
-    return torch_grad(
-        outputs=loss,
-        inputs=layer,
-        grad_outputs=torch.ones_like(loss),
-        retain_graph=True
-    )[0].detach()
+    return torch_grad(outputs=loss, inputs=layer, grad_outputs=torch.ones_like(loss), retain_graph=True)[0].detach()
+
 
 # discriminator
 
 
 class DiscriminatorBlock(nn.Module):
-    def __init__(
-        self,
-        input_channels,
-        filters,
-        downsample=True
-    ):
+    def __init__(self, input_channels, filters, downsample=True):
         super().__init__()
         self.conv_res = nn.Conv2d(input_channels, filters, 1, stride=(2 if downsample else 1))
 
@@ -132,13 +120,16 @@ class DiscriminatorBlock(nn.Module):
             nn.Conv2d(input_channels, filters, 3, padding=1),
             leaky_relu(),
             nn.Conv2d(filters, filters, 3, padding=1),
-            leaky_relu()
+            leaky_relu(),
         )
 
-        self.downsample = nn.Sequential(
-            Rearrange('b c (h p1) (w p2) -> b (c p1 p2) h w', p1=2, p2=2),
-            nn.Conv2d(filters * 4, filters, 1)
-        ) if downsample else None
+        self.downsample = (
+            nn.Sequential(
+                Rearrange("b c (h p1) (w p2) -> b (c p1 p2) h w", p1=2, p2=2), nn.Conv2d(filters * 4, filters, 1)
+            )
+            if downsample
+            else None
+        )
 
     def forward(self, x):
         res = self.conv_res(x)
@@ -152,15 +143,7 @@ class DiscriminatorBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(
-        self,
-        *,
-        dim,
-        image_size,
-        channels=3,
-        attn_res_layers=(16,),
-        max_dim=512
-    ):
+    def __init__(self, *, dim, image_size, channels=3, attn_res_layers=(16,), max_dim=512):
         super().__init__()
         image_size = pair(image_size)
         min_image_resolution = min(image_size)
@@ -170,7 +153,7 @@ class Discriminator(nn.Module):
 
         blocks = []
 
-        layer_dims = [channels] + [(dim * 4) * (2 ** i) for i in range(num_layers + 1)]
+        layer_dims = [channels] + [(dim * 4) * (2**i) for i in range(num_layers + 1)]
         layer_dims = [min(layer_dim, max_dim) for layer_dim in layer_dims]
         layer_dims_in_out = tuple(zip(layer_dims[:-1], layer_dims[1:]))
 
@@ -180,7 +163,6 @@ class Discriminator(nn.Module):
         image_resolution = min_image_resolution
 
         for ind, (in_chan, out_chan) in enumerate(layer_dims_in_out):
-            num_layer = ind + 1
             is_not_last = ind != (len(layer_dims_in_out) - 1)
 
             block = DiscriminatorBlock(in_chan, out_chan, downsample=is_not_last)
@@ -199,7 +181,7 @@ class Discriminator(nn.Module):
 
         dim_last = layer_dims[-1]
 
-        downsample_factor = 2 ** num_layers
+        downsample_factor = 2**num_layers
         last_fmap_size = tuple(map(lambda n: n // downsample_factor, image_size))
 
         latent_dim = last_fmap_size[0] * last_fmap_size[1] * dim_last
@@ -207,36 +189,36 @@ class Discriminator(nn.Module):
         self.to_logits = nn.Sequential(
             nn.Conv2d(dim_last, dim_last, 3, padding=1),
             leaky_relu(),
-            Rearrange('b ... -> b (...)'),
+            Rearrange("b ... -> b (...)"),
             nn.Linear(latent_dim, 1),
-            Rearrange('b 1 -> b')
+            Rearrange("b 1 -> b"),
         )
 
     def forward(self, x):
-
         for block, attn_block in zip(self.blocks, self.attn_blocks):
             x = block(x)
 
             if exists(attn_block):
-                x, ps = pack([x], 'b c *')
-                x = rearrange(x, 'b c n -> b n c')
+                x, ps = pack([x], "b c *")
+                x = rearrange(x, "b c n -> b n c")
                 x = attn_block(x) + x
-                x = rearrange(x, 'b n c -> b c n')
-                x, = unpack(x, ps, 'b c *')
+                x = rearrange(x, "b n c -> b c n")
+                (x,) = unpack(x, ps, "b c *")
 
         return self.to_logits(x)
+
 
 # ctvit - 3d ViT with factorized spatial and temporal attention made into an vqgan-vae autoencoder
 
 
 def pick_video_frame(video, frame_indices):
     batch, device = video.shape[0], video.device
-    video = rearrange(video, 'b c f ... -> b f c ...')
-    device = torch.device('cuda')
+    video = rearrange(video, "b c f ... -> b f c ...")
+    device = torch.device("cuda")
     batch_indices = torch.arange(batch, device=device)
-    batch_indices = rearrange(batch_indices, 'b -> b 1')
+    batch_indices = rearrange(batch_indices, "b -> b 1")
     images = video[batch_indices, frame_indices]
-    images = rearrange(images, 'b 1 c ... -> b c ...')
+    images = rearrange(images, "b 1 c ... -> b c ...")
     return images
 
 
@@ -259,8 +241,8 @@ class CTViT(nn.Module):
         vgg=None,
         discr_attn_res_layers=(16,),
         use_hinge_loss=True,
-        attn_dropout=0.,
-        ff_dropout=0.
+        attn_dropout=0.0,
+        ff_dropout=0.0,
     ):
         """
         einstein notations:
@@ -283,25 +265,26 @@ class CTViT(nn.Module):
         self.spatial_rel_pos_bias = ContinuousPositionBias(dim=dim, heads=heads)
 
         image_height, image_width = self.image_size
-        assert (image_height % patch_height) == 0 and (image_width % patch_width) == 0
+        assert (image_height % patch_height) == 0, "Image height must be divisible by patch height"
+        assert (image_width % patch_width) == 0, "Image width must be divisible by patch width"
 
         self.to_patch_emb_first_frame = nn.Sequential(
-            Rearrange('b c 1 (h p1) (w p2) -> b 1 h w (c p1 p2)', p1=patch_height, p2=patch_width),
+            Rearrange("b c 1 (h p1) (w p2) -> b 1 h w (c p1 p2)", p1=patch_height, p2=patch_width),
             nn.LayerNorm(channels * patch_width * patch_height),
             nn.Linear(channels * patch_width * patch_height, dim),
-            nn.LayerNorm(dim)
+            nn.LayerNorm(dim),
         )
 
         self.to_patch_emb = nn.Sequential(
             Rearrange(
-                'b c (t pt) (h p1) (w p2) -> b t h w (c pt p1 p2)',
+                "b c (t pt) (h p1) (w p2) -> b t h w (c pt p1 p2)",
                 p1=patch_height,
                 p2=patch_width,
                 pt=temporal_patch_size,
             ),
             nn.LayerNorm(channels * patch_width * patch_height * temporal_patch_size),
             nn.Linear(channels * patch_width * patch_height * temporal_patch_size, dim),
-            nn.LayerNorm(dim)
+            nn.LayerNorm(dim),
         )
 
         transformer_kwargs = dict(
@@ -321,16 +304,16 @@ class CTViT(nn.Module):
         self.dec_temporal_transformer = Transformer(depth=temporal_depth, **transformer_kwargs)
         self.to_pixels_first_frame = nn.Sequential(
             nn.Linear(dim, channels * patch_width * patch_height),
-            Rearrange('b 1 h w (c p1 p2) -> b c 1 (h p1) (w p2)', p1=patch_height, p2=patch_width)
+            Rearrange("b 1 h w (c p1 p2) -> b c 1 (h p1) (w p2)", p1=patch_height, p2=patch_width),
         )
 
         self.to_pixels = nn.Sequential(
             nn.Linear(dim, channels * patch_width * patch_height * temporal_patch_size),
             Rearrange(
-                'b t h w (c pt p1 p2) -> b c (t pt) (h p1) (w p2)',
+                "b t h w (c pt p1 p2) -> b c (t pt) (h p1) (w p2)",
                 p1=patch_height,
                 p2=patch_width,
-                pt=temporal_patch_size
+                pt=temporal_patch_size,
             ),
         )
 
@@ -354,10 +337,7 @@ class CTViT(nn.Module):
         # gan related losses
 
         self.discr = Discriminator(
-            image_size=256,
-            dim=discr_base_dim,
-            channels=channels,
-            attn_res_layers=discr_attn_res_layers
+            image_size=256, dim=discr_base_dim, channels=channels, attn_res_layers=discr_attn_res_layers
         )
 
         self.discr_loss = hinge_discr_loss if use_hinge_loss else bce_discr_loss
@@ -368,9 +348,9 @@ class CTViT(nn.Module):
         ph, pw = self.patch_size
 
         first_frame_mask, rest_frame_mask = video_frame_mask[:, :1], video_frame_mask[:, 1:]
-        rest_vq_mask = rearrange(rest_frame_mask, 'b (f p) -> b f p', p=self.temporal_patch_size)
+        rest_vq_mask = rearrange(rest_frame_mask, "b (f p) -> b f p", p=self.temporal_patch_size)
         video_mask = torch.cat((first_frame_mask, rest_vq_mask.any(dim=-1)), dim=-1)
-        return repeat(video_mask, 'b f -> b (f hw)', hw=(h // ph) * (w // pw))
+        return repeat(video_mask, "b f -> b (f hw)", hw=(h // ph) * (w // pw))
 
     def get_video_patch_shape(self, num_frames, include_first_frame=True):
         patch_frames = 0
@@ -379,7 +359,7 @@ class CTViT(nn.Module):
             num_frames -= 1
             patch_frames += 1
 
-        patch_frames += (num_frames // self.temporal_patch_size)
+        patch_frames += num_frames // self.temporal_patch_size
 
         return (patch_frames, *self.patch_height_width)
 
@@ -390,9 +370,11 @@ class CTViT(nn.Module):
     def frames_per_num_tokens(self, num_tokens):
         tokens_per_frame = self.image_num_tokens
 
-        assert (num_tokens % tokens_per_frame) == 0, f'number of tokens must be divisible by \
-            number of tokens per frame {tokens_per_frame}'
-        assert (num_tokens > 0)
+        assert (num_tokens % tokens_per_frame) == 0, (
+            f"number of tokens must be divisible by \
+            number of tokens per frame {tokens_per_frame}"
+        )
+        assert num_tokens > 0
         pseudo_frames = num_tokens // tokens_per_frame
         return (pseudo_frames - 1) * self.temporal_patch_size + 1
 
@@ -411,7 +393,7 @@ class CTViT(nn.Module):
 
     def copy_for_eval(self):
         device = next(self.parameters()).device
-        device = torch.device('cuda')
+        device = torch.device("cuda")
         vae_copy = copy.deepcopy(self.cpu())
 
         if vae_copy.use_vgg_and_gan:
@@ -443,62 +425,56 @@ class CTViT(nn.Module):
     def patch_height_width(self):
         return self.image_size[0] // self.patch_size[0], self.image_size[1] // self.patch_size[1]
 
-    def encode(
-        self,
-        tokens
-    ):
+    def encode(self, tokens):
         b = tokens.shape[0]
         h, w = self.patch_height_width
 
         video_shape = tuple(tokens.shape[:-1])
 
-        tokens = rearrange(tokens, 'b t h w d -> (b t) (h w) d')
-        device = torch.device('cuda')
+        tokens = rearrange(tokens, "b t h w d -> (b t) (h w) d")
+        device = torch.device("cuda")
         attn_bias = self.spatial_rel_pos_bias(h, w, device=device)
 
         tokens = self.enc_spatial_transformer(tokens, attn_bias=attn_bias, video_shape=video_shape)
 
-        tokens = rearrange(tokens, '(b t) (h w) d -> b t h w d', b=b, h=h, w=w)
+        tokens = rearrange(tokens, "(b t) (h w) d -> b t h w d", b=b, h=h, w=w)
 
         # encode - temporal
 
-        tokens = rearrange(tokens, 'b t h w d -> (b h w) t d')
+        tokens = rearrange(tokens, "b t h w d -> (b h w) t d")
 
         tokens = self.enc_temporal_transformer(tokens, video_shape=video_shape)
 
-        tokens = rearrange(tokens, '(b h w) t d -> b t h w d', b=b, h=h, w=w)
+        tokens = rearrange(tokens, "(b h w) t d -> b t h w d", b=b, h=h, w=w)
 
         return tokens
 
-    def decode(
-        self,
-        tokens
-    ):
+    def decode(self, tokens):
         b = tokens.shape[0]
         h, w = self.patch_height_width
 
         if tokens.ndim == 3:
-            tokens = rearrange(tokens, 'b (t h w) d -> b t h w d', h=h, w=w)
+            tokens = rearrange(tokens, "b (t h w) d -> b t h w d", h=h, w=w)
 
         video_shape = tuple(tokens.shape[:-1])
 
         # decode - temporal
 
-        tokens = rearrange(tokens, 'b t h w d -> (b h w) t d')
+        tokens = rearrange(tokens, "b t h w d -> (b h w) t d")
 
         tokens = self.dec_temporal_transformer(tokens, video_shape=video_shape)
 
-        tokens = rearrange(tokens, '(b h w) t d -> b t h w d', b=b, h=h, w=w)
+        tokens = rearrange(tokens, "(b h w) t d -> b t h w d", b=b, h=h, w=w)
 
         # decode - spatial
 
-        tokens = rearrange(tokens, 'b t h w d -> (b t) (h w) d')
-        device = torch.device('cuda')
+        tokens = rearrange(tokens, "b t h w d -> (b t) (h w) d")
+        device = torch.device("cuda")
         attn_bias = self.spatial_rel_pos_bias(h, w, device=device)
 
         tokens = self.dec_spatial_transformer(tokens, attn_bias=attn_bias, video_shape=video_shape)
 
-        tokens = rearrange(tokens, '(b t) (h w) d -> b t h w d', b=b, h=h, w=w)
+        tokens = rearrange(tokens, "(b t) (h w) d -> b t h w d", b=b, h=h, w=w)
 
         # to pixels
 
@@ -523,7 +499,7 @@ class CTViT(nn.Module):
         return_discr_loss=False,
         apply_grad_penalty=True,
         return_only_codebook_ids=False,
-        return_encoded_tokens=False
+        return_encoded_tokens=False,
     ):
         assert video.ndim in {4, 5}
 
@@ -531,7 +507,7 @@ class CTViT(nn.Module):
         # print(video.shape)
 
         if is_image:
-            video = rearrange(video, 'b c h w -> b c 1 h w')
+            video = rearrange(video, "b c h w -> b c 1 h w")
             assert not exists(mask)
 
         b, c, f, *image_dims, _ = *video.shape, video.device
@@ -558,7 +534,7 @@ class CTViT(nn.Module):
 
         # quantize
 
-        tokens, packed_fhw_shape = pack([tokens], 'b * d')
+        tokens, packed_fhw_shape = pack([tokens], "b * d")
 
         vq_mask = None
         if exists(mask):
@@ -567,25 +543,25 @@ class CTViT(nn.Module):
         tokens, indices, commit_loss = self.vq(tokens, mask=vq_mask)
 
         if return_only_codebook_ids:
-            indices, = unpack(indices, packed_fhw_shape, 'b *')
+            (indices,) = unpack(indices, packed_fhw_shape, "b *")
             return indices
 
-        tokens = rearrange(tokens, 'b (t h w) d -> b t h w d', h=h, w=w)
+        tokens = rearrange(tokens, "b (t h w) d -> b t h w d", h=h, w=w)
 
         if return_encoded_tokens:
             return tokens
 
         recon_video = self.decode(tokens)
 
-        returned_recon = rearrange(recon_video, 'b c 1 h w -> b c h w') if is_image else recon_video.clone()
+        returned_recon = rearrange(recon_video, "b c 1 h w -> b c h w") if is_image else recon_video.clone()
 
         if return_recons_only:
             return returned_recon
 
         if exists(mask):
             # variable lengthed video / images training
-            recon_loss = F.mse_loss(video, recon_video, reduction='none')
-            recon_loss = recon_loss[repeat(mask, 'b t -> b c t', c=c)]
+            recon_loss = F.mse_loss(video, recon_video, reduction="none")
+            recon_loss = recon_loss[repeat(mask, "b t -> b c t", c=c)]
             recon_loss = recon_loss.mean()
         else:
             recon_loss = F.mse_loss(video, recon_video)
@@ -603,7 +579,7 @@ class CTViT(nn.Module):
         # whether to return discriminator loss
 
         if return_discr_loss:
-            assert exists(self.discr), 'discriminator must exist to train it'
+            assert exists(self.discr), "discriminator must exist to train it"
 
             video = pick_video_frame(video, frame_indices)
             recon_video = pick_video_frame(recon_video, frame_indices)
@@ -652,7 +628,7 @@ class CTViT(nn.Module):
 
         if video.shape[1] == 1:
             input_vgg_input2, recon_vgg_input2 = map(
-                lambda t: repeat(t, 'b 1 ... -> b c ...', c=3), (input_vgg_input, recon_vgg_input)
+                lambda t: repeat(t, "b 1 ... -> b c ...", c=3), (input_vgg_input, recon_vgg_input)
             )
         transform = T.Compose([T.Resize(256)])
         input_vgg_input2 = transform(input_vgg_input2)
