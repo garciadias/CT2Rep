@@ -53,6 +53,7 @@ class Tokenizer(object):
 
         return report
 
+    @staticmethod
     def clean_report_text_iu_xray(text):
         # Define all replacements as (pattern, replacement) pairs
         replacements = [
@@ -72,6 +73,7 @@ class Tokenizer(object):
         # Final processing steps
         return text.strip().lower().split(". ")
 
+    @staticmethod
     def clean_sentence_iu_xray(text):
         # Remove specific quoted characters
         for char in ['"', "/", "\\", "'"]:
@@ -82,6 +84,7 @@ class Tokenizer(object):
 
         return text.strip().lower()
 
+    @staticmethod
     def clean_report_text_mimic_cxr(text):
         # Define all replacements as (pattern, replacement) pairs
         replacements = [
@@ -102,6 +105,7 @@ class Tokenizer(object):
         return text.strip().lower().split(". ")
 
     # Clean special characters from sentences
+    @staticmethod
     def clean_sentence_mimic_cxr(sentence):
         # Remove specific quoted characters
         for char in ['"', "/", "\\", "'"]:
